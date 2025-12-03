@@ -33,6 +33,8 @@ pn.config.raw_css.append("""
 }
 """)
 
+pn.extension('mathjax')
+
 # ----------------------------------------------------------------------------------
 # Data Loading and Preprocessing
 # ----------------------------------------------------------------------------------
@@ -101,6 +103,24 @@ PROCESS_LIST = list(PROCESS_COLORS.keys())
 
 # Precompute total counts for each process (used for percentage bars)
 FULL_COUNTS = {proc: int((df.Process == proc).sum()) for proc in PROCESS_LIST}
+
+##MENU_BUTTON = WIP!
+
+HEADER_ROW = pn.Row(
+    pn.Column(pn.pane.Image("images/BlueATLASLogo.png", height=60)),
+    styles={'background':'#0b80c3'},
+    sizing_mode="stretch_width",
+    height=80
+)
+
+SPACE_ROW = pn.Row(height=150, sizing_mode="stretch_width")
+
+FOOTER_ROW = pn.Row(
+    pn.pane.HTML("<h2 style='margin: 0; text-align: left; padding-top: 75px; font-family: Coustard; font-size: 25; color:'White'>Copyright 2025 ATLAS Collaboration. Built with Panel/Bokeh.</h2>"),
+    styles={'background':'#0b80c3'},
+    sizing_mode="stretch_width",
+    height=120
+)
 
 def make_histogram(data: pd.DataFrame, column: str, edges: np.ndarray) -> np.ndarray:
     """
@@ -542,15 +562,19 @@ class CrossFilteringHist(param.Parameterized):
             margin=(10, 10, 10, 10)
         )
 
+        header_row = HEADER_ROW
+
         # Combined title and toggle in one row
         title_row = pn.Row(
+            pn.Column(pn.pane.Image("images/atlas_logo.png", width=350)),
+            pn.Spacer(width=50),
             pn.pane.HTML(
-                "<h1 style='margin: 0; padding-top: 10px;'>Histogram Analyzer to Find Dark Matter</h1>",
-                width=1160
+                "<h1 style='margin: 0; text-align: center; padding-top: 100px; font-family: Coustard; font-size: 25px; color:'DarkSlateGrey'>Histogram Analyzer to Find Dark Matter</h1>",
+                 width=700
             ),
-            pn.Spacer(width=100),
-            pn.Column(self.cb_toggle, margin=(10, 0, 0, 0)),
-            height=60,
+            pn.Spacer(width=50),
+            pn.Column(self.cb_toggle, margin=(120, 0, 0, 0)),
+            height=300,
             sizing_mode=None,
             margin=(0, 0, 0, 0)
         )
@@ -563,8 +587,30 @@ class CrossFilteringHist(param.Parameterized):
             sizing_mode="stretch_width"
         )
 
-        return pn.Column(title_row, top_row, row1, row2, sizing_mode="stretch_width")
+        # Footer row (add with detail)
+        space_row = SPACE_ROW 
+        footer_row = FOOTER_ROW
 
+        return pn.Column(header_row, title_row, top_row, row1, row2, space_row, footer_row, sizing_mode="stretch_width")
 
 dashboard = CrossFilteringHist()
-dashboard.layout.servable()
+
+webtext = r""""""
+with open("WebText.md", "r") as ifile:
+    for line in ifile:
+        webtext += fr"{line}"
+
+instructions = pn.Column(
+    HEADER_ROW,
+    pn.Row(
+        pn.pane.Markdown(webtext) #, renderer='markdown-it')
+    ),
+    SPACE_ROW,
+    FOOTER_ROW,
+    sizing_mode="stretch_width"
+)
+
+tabs = pn.Tabs(("README", instructions), ("Do the analysis!", dashboard.layout))
+tabs.servable()
+
+
