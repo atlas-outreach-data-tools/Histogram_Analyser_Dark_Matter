@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
 from math import pi
-
+import os
 from bokeh.plotting import figure
 from bokeh.models import (
     ColumnDataSource, Div, Range1d, BoxAnnotation,
     BoxSelectTool
 )
+#from bokeh.resources import INLINE
 from bokeh.events import SelectionGeometry, DoubleTap, Reset
 from bokeh.transform import cumsum
 
@@ -34,6 +35,7 @@ pn.config.raw_css.append("""
 """)
 
 pn.extension('mathjax')
+pn.extension('b64')
 
 # ----------------------------------------------------------------------------------
 # Data Loading and Preprocessing
@@ -596,15 +598,24 @@ class CrossFilteringHist(param.Parameterized):
 dashboard = CrossFilteringHist()
 
 webtext = r""""""
+images = []
 with open("WebText.md", "r") as ifile:
     for line in ifile:
-        webtext += fr"{line}"
+        if line.startswith("XXX_INSERT:"):
+            imagename = line[12:].strip("\n").strip()
+            images.append(pn.Spacer(height=300))
+            images.append( 
+                pn.Row(pn.pane.Image(imagename, width=400))
+                ) 
+        else:
+            webtext += fr"{line}"
+
+Outwebtext = pn.pane.Markdown(webtext, width=900) #, renderer='myst')
+Outwebimages = pn.Column(*images)
 
 instructions = pn.Column(
     HEADER_ROW,
-    pn.Row(
-        pn.pane.Markdown(webtext) #, renderer='markdown-it')
-    ),
+	pn.Row(Outwebtext, Outwebimages, sizing_mode="stretch_width"),
     SPACE_ROW,
     FOOTER_ROW,
     sizing_mode="stretch_width"
