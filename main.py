@@ -104,7 +104,7 @@ PROCESS_COLORS = NORMAL_COLORS.copy()  # Default Color
 PROCESS_LIST = list(PROCESS_COLORS.keys())
 
 # Precompute total counts for each process (used for percentage bars)
-FULL_COUNTS = {proc: int((df.Process == proc).sum()) for proc in PROCESS_LIST}
+FULL_COUNTS = {proc : int((df.get("totalWeight", None)*(df.Process == proc)).sum()) for proc in PROCESS_LIST}
 
 ##MENU_BUTTON = WIP!
 
@@ -432,7 +432,7 @@ class CrossFilteringHist(param.Parameterized):
         """
         Update pie chart data source according to filtered data.
         """
-        counts = {proc: int(((df.Process == proc) & mask).sum()) for proc in selected_processes}
+        counts = {proc: int(((df.get("totalWeight", None))*((df.Process == proc) & mask)).sum()) for proc in selected_processes}
         pie_df = pd.Series(counts).reset_index(name='value').rename(columns={'index': 'process'})
         pie_df = pie_df[pie_df.value > 0]
         pie_df['angle'] = pie_df['value'] / pie_df['value'].sum() * 2 * pi
@@ -444,7 +444,7 @@ class CrossFilteringHist(param.Parameterized):
         """
         Update HTML div displaying counts and significance metric.
         """
-        total_events = int(mask.sum())
+        total_events = int( ((df.get("totalWeight", None)) * mask).sum())
         html = [f"<h3>Total Events: {total_events}</h3>"]
         html.append(
             f"<div style='display: flex; justify-content: space-between; align-items: center; "
@@ -455,7 +455,7 @@ class CrossFilteringHist(param.Parameterized):
         )
 
         for i, proc in enumerate(self.processes):
-            count = int(((df.Process == proc) & mask).sum())
+            count = int(((df.get("totalWeight", None))*((df.Process == proc) & mask)).sum())
             pct = int(count / FULL_COUNTS[proc] * 100) if FULL_COUNTS[proc] else 0
 
             # Bar with count
